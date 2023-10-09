@@ -29,10 +29,14 @@ start_index = MIT_BIH_AF.signal_time_sample("00:08:04.772","10:13:43",len(ECG0))
 signal, s, e = MIT_BIH_AF.find_R_R_peak(start_index, ECG0, ECG_rpeaks)
 
 # 将信号长度重采样到500
-resample_signal = MIT_BIH_AF.resample_signal_length(signal, 500)
+denoise_signal = MIT_BIH_AF.wavelet_denoise(signal)
 
 import matplotlib.pyplot as plt
 plt.plot(signal)
-plt.plot(resample_signal)
-# plt.show()
-plt.savefig("./MIT_BIH_AF/images/signal_time_sample.jpg", bbox_inches='tight', pad_inches=0)  # 保存为PNG格式
+plt.savefig("./MIT_BIH_AF/images/wavelet_denoise_ori.jpg", bbox_inches='tight', pad_inches=0)  # 保存为PNG格式
+plt.close()
+
+plt.plot(denoise_signal)
+plt.savefig("./MIT_BIH_AF/images/wavelet_denoise_after.jpg", bbox_inches='tight', pad_inches=0)  # 保存为PNG格式
+plt.close()
+

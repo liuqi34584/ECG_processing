@@ -12,6 +12,7 @@
   - [2.4 寻找一段信号中的所有 R 峰----find_R_R_peaks](#24-寻找一段信号中的所有-r-峰----find_r_r_peaks)
   - [2.5 为信号建立伴随标注信号----AFDB_create_mate_ann](#25-为信号建立伴随标注信号----afdb_create_mate_ann)
   - [2.6 重采样信号长度----resample_signal_length](#26-重采样信号长度----resample_signal_length)
+  - [2.7 小波变换去噪滤波----wavelet_denoise](#27-小波变换去噪滤波----wavelet_denoise)
 
 # 1 介绍数据集 
 MIT-BIH-AF 是一个心电图信号房颤数据集。本文件夹则是针对该数据集开发的快捷使用函数。MIT-BIH-AF 数据集采集有 23 人的两导联数据。总长十个小时。单个病人约920万个数据点长度。注意,'00735', '03665' 病人没有 data 数据,虽然数据集有他们的标注但没有他们的信号，不可用。
@@ -42,8 +43,7 @@ MIT-BIH-AF 是一个心电图信号房颤数据集。本文件夹则是针对该
 
 ## 2.1 读取dat,qrc,atr文件，获得ECG_rpeaks，ann_aux_note，ann_sample，ECG0
 
-
-dat后缀是记录心电实际信号的文件，atr后缀是心电实际信号对应的标注文件，qrs后缀是心电实际信号的每个R峰的标注文件
+使用数据集主要通过读取文件，其中dat后缀是记录心电实际信号的文件，atr后缀是心电实际信号对应的标注文件，qrs后缀是心电实际信号的每个R峰的标注文件。数据集所有的信息都在这三大文件中。
 ```
 import wfdb
 
@@ -75,13 +75,13 @@ import matplotlib.pyplot as plt
 plt.plot(ECG0[0:2000])  # 打印输出 ECG0 信号0-2000的值
 plt.show()
 ```
+
 <left><img src = "./images/ecg0_0_2000.png" width = 60%><left>
 
 ## 2.2 寻找时间点函数----signal_time_sample
-
-
 本函数用于在代码中找到我们看到的感兴趣段落的位置。
 如可视化界面我们的时间点为 "00:06:50.316"。
+
 <left><img src = "./images/PhysioNet_wave_resample_time.jpg" width = 100%><left>
 
 获取该处时间点在信号中的索引值，并展示
@@ -149,7 +149,7 @@ for i in r_peaks_position:
 
 <left><img src = "./images/find_r_r_peaks1.jpg" width = 100%><left>
 
-|1|2|3|4|5|6|7|
+|第 1 个R峰|第 2 个R峰|第 3 个R峰|第 4 个R峰|第 5 个R峰|第 6 个R峰|第 7 个R峰|
 |----|----|----|----|----|----|----|
 |<left><img src = "./images/find_r_r_peaks_r0.jpg" width = 100%><left> |<left><img src = "./images/find_r_r_peaks_r1.jpg" width = 100%><left> |<left><img src = "./images/find_r_r_peaks_r2.jpg" width = 100%><left> |<left><img src = "./images/find_r_r_peaks_r3.jpg" width = 100%><left> |<left><img src = "./images/find_r_r_peaks_r4.jpg" width = 100%><left> |<left><img src = "./images/find_r_r_peaks_r5.jpg" width = 100%><left> |<left><img src = "./images/find_r_r_peaks_r6.jpg" width = 100%><left> |
 
@@ -201,3 +201,24 @@ resample_signal = MIT_BIH_AF.resample_signal_length(signal, 500)
 运行结果如图，原信号长度 200（蓝色），重采样到了 500 长度（橙色）
 
 <left><img src = "./images/signal_time_sample.jpg" width = 60%><left>
+
+## 2.7 小波变换去噪滤波----wavelet_denoise
+有的时候需要对信号进行去噪
+
+使用代码举例：
+```
+import MIT_BIH_AF_function as MIT_BIH_AF
+
+# 获取 一个起点时间点的索引值
+start_index = MIT_BIH_AF.signal_time_sample("00:08:04.772","10:13:43",len(ECG0))
+
+# 获取一段信号
+signal, s, e = MIT_BIH_AF.find_R_R_peak(start_index, ECG0, ECG_rpeaks)
+
+# 对一段信号进行小波去噪
+denoise_signal = MIT_BIH_AF.wavelet_denoise(signal)
+```
+|原信号|去噪之后的信号|
+|---|---|
+|<left><img src = "./images/wavelet_denoise_ori.jpg" width = 100%><left>|<left><img src = "./images/wavelet_denoise_after.jpg" width = 100%><left>
+|
