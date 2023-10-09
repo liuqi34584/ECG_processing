@@ -23,10 +23,13 @@ ECG0 = record.p_signal[:, 0]
 import MIT_BIH_AF_function as MIT_BIH_AF
 
 # 获取该处时间点的索引值
-index = MIT_BIH_AF.signal_time_sample("00:06:50.316","10:13:43",len(ECG0))
+index = MIT_BIH_AF.signal_time_sample("00:06:48.817","10:13:43",len(ECG0))
 
-# 展示该索引值左右500的信号
+# 获取索引值后的 R 峰信号
+signal, s, e = MIT_BIH_AF.find_R_R_peak(index, ECG0, ECG_rpeaks)
+
+# 展示信号
 import matplotlib.pyplot as plt
-plt.plot(ECG0[index-500:index+500])  # 打印输出 ECG0 信号0-2000的值
+plt.plot(signal)  # 打印输出 signal 信号
 plt.show()
 
