@@ -22,19 +22,18 @@ ECG0 = record.p_signal[:, 0]
 
 import MIT_BIH_AF_function as MIT_BIH_AF
 
-# 获取 起点时间点的索引值
-start_index = MIT_BIH_AF.signal_time_sample("00:06:48.067","10:13:43",len(ECG0))
+# 获取 一个起点时间点的索引值
+start_index = MIT_BIH_AF.signal_time_sample("00:08:04.772","10:13:43",len(ECG0))
 
-# 获取 终点时间点的索引值
-end_index = MIT_BIH_AF.signal_time_sample("00:06:51.764","10:13:43",len(ECG0))
+# 获取 一个终点时间点的索引值
+end_index = MIT_BIH_AF.signal_time_sample("00:08:11.672","10:13:43",len(ECG0))
 
-# 根据索引值查找 R 峰
-r_peaks_position = MIT_BIH_AF.find_R_R_peaks(start_index, end_index, ECG0, ECG_rpeaks)
+# 建立原信号的伴随标注信号
+ECG_ann = MIT_BIH_AF.AFDB_create_mate_ann(len(ECG0), ann_sample, ann_aux_note)
 
-for i in r_peaks_position: 
-    r_signal = ECG0[i[0]:i[1]]
-    
-    # 展示信号
-    import matplotlib.pyplot as plt
-    plt.plot(r_signal)
-    plt.show()
+import matplotlib.pyplot as plt
+plt.subplot(2,1,1)
+plt.plot(ECG0[start_index:end_index])  # 展示原信号
+plt.subplot(2,1,2)
+plt.plot(ECG_ann[start_index:end_index])  # 展示biaozhu
+plt.show()

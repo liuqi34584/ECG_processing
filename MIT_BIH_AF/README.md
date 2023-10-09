@@ -75,8 +75,10 @@ plt.show()
 ```
 <left><img src = "./images/PhysioNet_wave_resample_time2.jpg" width = 60%><left>
 
-## 2.3 寻找R_R峰在信号中的位置函数----find_R_R_peak
+## 2.3 寻找R_R峰在信号中的位置----find_R_R_peak
 日常使用时经常遇到提取单个R峰的情况，本函数具备此功能。
+
+使用代码举例：
 ```
 import MIT_BIH_AF_function as MIT_BIH_AF
 
@@ -96,8 +98,10 @@ plt.show()
 |:--------------:|:-----:|
 |<left><img src = "./images/find_r_r_peak1.jpg" width = 80%><left>|<left><img src = "./images/find_r_r_peak2.jpg" width = 100%><left>|
 
-## 2.4 寻找一段信号中的所有 R 峰函数----find_R_R_peaks
+## 2.4 寻找一段信号中的所有 R 峰----find_R_R_peaks
 我们除了上面的要提取单独 R 峰。很多情况下，我们还要在一段心电信号中提取出该段落的所有单个 R 峰信号。
+
+使用代码举例：
 ```
 import MIT_BIH_AF_function as MIT_BIH_AF
 
@@ -124,4 +128,32 @@ for i in r_peaks_position:
 
 |1|2|3|4|5|6|7|
 |--|--|--|--|--|--|--|
-|<left><img src = "./images/find_R_R_peaks_r0.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r1.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r2.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r3.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r4.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r5.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r6.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r7.png" width = 100%><left>|
+|<left><img src = "./images/find_R_R_peaks_r0.jpg" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r1.jpg" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r2.jpg" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r3.jpg" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r4.jpg" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r5.jpg" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r6.jpg" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r7.jpg" width = 100%><left>|
+
+## 2.5 为信号建立伴随标注信号----AFDB_create_mate_ann
+建立伴随标注信号在代码中存在很大的好处。使得波形提取与对应的标注匹配更加方便。避免麻烦的原信号标注类型寻找。如图下面的原信号，根据atr文件的标注可以看到，患者发生了一秒左右的房颤。但数据集并不是对每一个点进行标注，伴随标注信号应运而生。
+<left><img src = "./images/AFDB_create_mate_ann.jpg" width = 100%><left>
+
+使用代码举例：
+```
+import MIT_BIH_AF_function as MIT_BIH_AF
+
+# 获取 一个起点时间点的索引值
+start_index = MIT_BIH_AF.signal_time_sample("00:08:04.772","10:13:43",len(ECG0))
+
+# 获取 一个终点时间点的索引值
+end_index = MIT_BIH_AF.signal_time_sample("00:08:11.672","10:13:43",len(ECG0))
+
+# 建立原信号的伴随标注信号
+ECG_ann = MIT_BIH_AF.AFDB_create_mate_ann(len(ECG0), ann_sample, ann_aux_note)
+
+# 展示波形
+import matplotlib.pyplot as plt
+plt.subplot(2,1,1)
+plt.plot(ECG0[start_index:end_index])  # 展示原信号
+plt.subplot(2,1,2)
+plt.plot(ECG_ann[start_index:end_index])  # 展示biaozhu
+plt.show()
+```
+运行结果如下，下图中第一张表是原信号，第二张表是伴随标注信号（"1"代表房颤，"0"表示正常）
+<left><img src = "./images/AFDB_create_mate_ann1.jpg" width = 100%><left>
