@@ -13,6 +13,7 @@
   - [2.5 为信号建立伴随标注信号----AFDB_create_mate_ann](#25-为信号建立伴随标注信号----afdb_create_mate_ann)
   - [2.6 重采样信号长度----resample_signal_length](#26-重采样信号长度----resample_signal_length)
   - [2.7 小波变换去噪滤波----wavelet_denoise](#27-小波变换去噪滤波----wavelet_denoise)
+  - [2.8 利用小波变换去趋势----wavelet_detrend](#28-利用小波变换去趋势----wavelet_detrend)
 
 # 1 介绍数据集 
 MIT-BIH-AF 是一个心电图信号房颤数据集。本文件夹则是针对该数据集开发的快捷使用函数。MIT-BIH-AF 数据集采集有 23 人的两导联数据。总长十个小时。单个病人约920万个数据点长度。注意,'00735', '03665' 病人没有 data 数据,虽然数据集有他们的标注但没有他们的信号，不可用。
@@ -31,7 +32,7 @@ MIT-BIH-AF 是一个心电图信号房颤数据集。本文件夹则是针对该
 
 数据集可视化地址：[https://www.physionet.org/lightwave/?db=afdb/1.0.0](https://www.physionet.org/lightwave/?db=afdb/1.0.0)
 
-可视化界面不仅显示了数据集的实际信号，而且对数据集的标注也显示了出来，可视化界面如图：
+可视化界面不仅显示了数据集的实际信号，而且对数据集的标注也显示了出来，单个病人数据量比较大所以网页端加载有些慢，打开可视化链接选择病人ID后耐心等待一会儿（大约20秒）。可视化界面如图：
 
 <left><img src = "./images/PhysioNet_wave.jpg" width = 100%><left>
 
@@ -175,7 +176,7 @@ import matplotlib.pyplot as plt
 plt.subplot(2,1,1)
 plt.plot(ECG0[start_index:end_index])  # 展示原信号
 plt.subplot(2,1,2)
-plt.plot(ECG_ann[start_index:end_index])  # 展示biaozhu
+plt.plot(ECG_ann[start_index:end_index])  # 展示标注波形
 plt.show()
 ```
 运行结果如下，下图中第一张表是原信号，第二张表是伴随标注信号（"1"代表房颤，"0"表示正常）
@@ -183,7 +184,7 @@ plt.show()
 <left><img src = "./images/AFDB_create_mate_ann1.jpg" width = 60%><left>
 
 ## 2.6 重采样信号长度----resample_signal_length
-在我们提取信号之后，最终将信号送入模型训练。但多数情况下，模型信号输入长度有要求。而我们采集的信号可能不是固定长度的，于是开发了本函数将一段信号重采样到指定的长度。注意本函数是基于 scipy 库实现的，如果出现缺少 scipy 库缺失相关的报错，请使用```pip install scipy```
+在我们提取信号之后，最终将信号送入模型训练。但多数情况下，模型信号输入长度有要求。而我们采集的信号可能不是固定长度的，于是开发了本函数将一段信号重采样到指定的长度。注意本函数是基于 scipy 库实现的，如果出现缺少 scipy 库缺失相关的报错，请使用  ```pip install scipy```
 
 使用代码举例：
 ```
@@ -192,7 +193,7 @@ import MIT_BIH_AF_function as MIT_BIH_AF
 # 获取 一个起点时间点的索引值
 start_index = MIT_BIH_AF.signal_time_sample("00:08:04.772","10:13:43",len(ECG0))
 
-# 获取一段信号
+# 寻找一段 R 峰信号
 signal, s, e = MIT_BIH_AF.find_R_R_peak(start_index, ECG0, ECG_rpeaks)
 
 # 将信号长度重采样到500
@@ -202,8 +203,8 @@ resample_signal = MIT_BIH_AF.resample_signal_length(signal, 500)
 
 <left><img src = "./images/signal_time_sample.jpg" width = 60%><left>
 
-## 2.7 小波变换去噪滤波----wavelet_denoise
-有的时候需要对信号进行去噪
+## 2.7 利用小波变换去噪滤波----wavelet_denoise
+有的时候需要对信号进行去噪。这里简单封装了一个小波去噪的方法，使用的是 小波pyhon库。因此使用时要注意安装软件  ```pip install PyWavelets```
 
 使用代码举例：
 ```
@@ -212,7 +213,7 @@ import MIT_BIH_AF_function as MIT_BIH_AF
 # 获取 一个起点时间点的索引值
 start_index = MIT_BIH_AF.signal_time_sample("00:08:04.772","10:13:43",len(ECG0))
 
-# 获取一段信号
+# 寻找一段 R 峰信号
 signal, s, e = MIT_BIH_AF.find_R_R_peak(start_index, ECG0, ECG_rpeaks)
 
 # 对一段信号进行小波去噪
@@ -222,3 +223,26 @@ denoise_signal = MIT_BIH_AF.wavelet_denoise(signal)
 |---|---|
 |<left><img src = "./images/wavelet_denoise_ori.jpg" width = 100%><left>|<left><img src = "./images/wavelet_denoise_after.jpg" width = 100%><left>
 |
+
+## 2.8 利用小波变换去趋势----wavelet_detrend
+去趋势也叫 ”基线偏移“，”基线漂移“，描述的都是同一个现象，即原波形被一种频率更低的波形干扰，而产生整体波形的移动。本函数封装了一个小波去趋势的方法，使用的是 小波pyhon库。因此使用时要注意安装软件  ```pip install PyWavelets```
+
+使用代码举例：
+```
+import MIT_BIH_AF_function as MIT_BIH_AF
+
+# 获取 一个时间点的索引值
+index = MIT_BIH_AF.signal_time_sample("00:06:48.772","10:13:43",len(ECG0))
+
+# 获取一段信号，该时间点左右 800 范围
+signal = ECG0[index-800:index+800]
+
+# 将信号进行去趋势处理
+detrend_signal = MIT_BIH_AF.wavelet_detrend(signal)
+```
+|原信号|去趋势处理的信号|
+|---|---|
+|<left><img src = "./images/wavelet_detrend_ori.jpg" width = 100%><left>|<left><img src = "./images/wavelet_detrend_after.jpg" width = 100%><left>
+|
+
+

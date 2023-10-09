@@ -1,5 +1,4 @@
 import numpy as np
-import pywt
 
 # 根据采样时间，获取该信号位于的信号坐标点
 # 传入：采样时间点 "00:06:45"，信号总时间 "10:13:43",信号总长度 
@@ -55,85 +54,6 @@ def find_R_R_peaks(start, end, ECG_signal, ECG_rpeaks):
         r_peaks_position.append([s, e])
     
     return r_peaks_position
-
-# 对单个R_R峰去趋势
-# 传入：被寻找的索引值，一整个信号单通道，一整个R峰标注
-# 返回值：该索引值右边的R_R峰的片段信号
-# 作者：刘琦
-# 使用举例：signal2 = R_R_detrend(signal_point, ECG0, ECG_rpeaks, long_detrend=True)
-def R_R_detrend(start, ECG_signal, ECG_rpeaks, long_detrend=False):
-    signal, s, e  = find_R_R_peak(start, ECG_signal, ECG_rpeaks)
-
-    if long_detrend:
-        long_s = s-1000
-        long_e = e+1000
-        if long_s < 0:
-            long_signal = ECG_signal[0:2000]
-            coeffs = pywt.wavedec(long_signal, 'db6', level=6)  # 进行离散小波变换
-            coeffs[0] = np.zeros_like(coeffs[0])  # 将趋势分量置零
-            long_signal = pywt.waverec(coeffs, 'db6')  # 重构信号
-            ECG_signal[0:len(long_signal)] = long_signal
-            signal = ECG_signal[s:e]
-        elif long_e > len(ECG_signal):
-            long_signal = ECG_signal[-2000:]
-            coeffs = pywt.wavedec(long_signal, 'db6', level=6)  # 进行离散小波变换
-            coeffs[0] = np.zeros_like(coeffs[0])  # 将趋势分量置零
-            long_signal = pywt.waverec(coeffs, 'db6')  # 重构信号
-            ECG_signal[-len(long_signal):] = long_signal
-            signal = ECG_signal[s:e]
-        else:
-            long_signal = ECG_signal[long_s:long_e]
-            coeffs = pywt.wavedec(long_signal, 'db6', level=6)  # 进行离散小波变换
-            coeffs[0] = np.zeros_like(coeffs[0])  # 将趋势分量置零
-            long_signal = pywt.waverec(coeffs, 'db6')  # 重构信号
-            ECG_signal[long_s:long_s + len(long_signal)] = long_signal
-            signal = ECG_signal[s:e]
-
-    coeffs = pywt.wavedec(signal, 'db4', level=4)  # 进行离散小波变换
-    coeffs[0] = np.zeros_like(coeffs[0])  # 将趋势分量置零
-    coeffs[3] = np.zeros_like(coeffs[3])  # 将趋势分量置零
-    coeffs[4] = np.zeros_like(coeffs[4])  # 将趋势分量置零
-    signal = pywt.waverec(coeffs, 'db4')  # 重构信号
-
-    return signal
-
-
-# 寻找_R_R_R_R_R_峰在信号中的位置
-# 传入：  被寻找的索引值起点，一整个信号通道，一整个R峰标注
-# 返回值：该索引值右边的_R_R_R_R_R_峰的片段信号
-# 使用举例：signal, s, e = find_R_R_R_R_R_peak(58484, ECG0, ECG_rpeaks)
-# 作者：刘琦
-def find_R_R_R_R_R_peak(start, ECG_signal, ECG_rpeaks):
-    index = np.searchsorted(ECG_rpeaks, start)  # 这个R峰不准确，重新再次寻找R峰
-    s0, e0= ECG_rpeaks[index-1]-20, ECG_rpeaks[index-1]+20
-    R_peak0 = np.argmax(ECG_signal[s0:e0])
-
-    s1, e1= ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
-    R_peak1 = np.argmax(ECG_signal[s1:e1])
-
-    s5, e5= ECG_rpeaks[index+4]-20, ECG_rpeaks[index+4]+20
-    R_peak5 = np.argmax(ECG_signal[s5:e5])
-
-    s6, e6= ECG_rpeaks[index+5]-20, ECG_rpeaks[index+5]+20
-    R_peak6 = np.argmax(ECG_signal[s6:e6])
-
-    s = int((s0+s1+R_peak0+R_peak1)/2)
-    e = int((s5+s6+R_peak5+R_peak6)/2)
-
-    return ECG_signal[s:e], s, e
-
-# 对单个R_R_R_R_R峰去趋势
-# 传入：  被寻找的索引值，一整个信号单通道，一整个R峰标注
-# 返回值：该索引值右边的R_R_R_R_R峰的片段信号
-# 作者：刘琦
-def R_R_R_R_R_detrend(start, ECG_signal, ECG_rpeaks):
-    signal = find_R_R_R_R_R_peak(start, ECG_signal, ECG_rpeaks)
-
-    coeffs = pywt.wavedec(signal, 'db4', level=4)  # 进行离散小波变换
-    coeffs[0] = np.zeros_like(coeffs[0])  # 将趋势分量置零
-    signal = pywt.waverec(coeffs, 'db4')  # 重构信号
-
-    return signal
 
 # 创建一个关于信号的伴随列表，此函数废时间，920万信号处理两秒
 # 传入：信号长度，标记采样点数组，标记符号数组
@@ -209,6 +129,8 @@ def resample_signal_length(ori_signal, length):
 # 使用举例：denoise_signal = wavelet_denoise(ori_signal)
 # 作者：刘琦
 def wavelet_denoise(signal):
+    import pywt
+
     # 小波变换
     coeffs = pywt.wavedec(data=signal, wavelet='db5', level=9)
     cA9, cD9, cD8, cD7, cD6, cD5, cD4, cD3, cD2, cD1 = coeffs
@@ -222,6 +144,43 @@ def wavelet_denoise(signal):
     r_signal = pywt.waverec(coeffs=coeffs, wavelet='db5')
 
     return r_signal
+
+# 对单个信号去趋势
+# 传入：  想要去趋势的信号
+# 返回值：被去趋势的信号
+# 作者：刘琦
+def wavelet_detrend(ori_signal):
+    import pywt
+
+    coeffs = pywt.wavedec(ori_signal, 'db4', level=4)  # 进行离散小波变换
+    coeffs[0] = np.zeros_like(coeffs[0])  # 将趋势分量置零
+    signal = pywt.waverec(coeffs, 'db4')  # 重构信号
+
+    return signal
+
+# 寻找_R_R_R_R_R_峰在信号中的位置
+# 传入：  被寻找的索引值起点，一整个信号通道，一整个R峰标注
+# 返回值：该索引值右边的_R_R_R_R_R_峰的片段信号
+# 使用举例：signal, s, e = find_R_R_R_R_R_peak(58484, ECG0, ECG_rpeaks)
+# 作者：刘琦
+def find_R_R_R_R_R_peak(start, ECG_signal, ECG_rpeaks):
+    index = np.searchsorted(ECG_rpeaks, start)  # 这个R峰不准确，重新再次寻找R峰
+    s0, e0= ECG_rpeaks[index-1]-20, ECG_rpeaks[index-1]+20
+    R_peak0 = np.argmax(ECG_signal[s0:e0])
+
+    s1, e1= ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
+    R_peak1 = np.argmax(ECG_signal[s1:e1])
+
+    s5, e5= ECG_rpeaks[index+4]-20, ECG_rpeaks[index+4]+20
+    R_peak5 = np.argmax(ECG_signal[s5:e5])
+
+    s6, e6= ECG_rpeaks[index+5]-20, ECG_rpeaks[index+5]+20
+    R_peak6 = np.argmax(ECG_signal[s6:e6])
+
+    s = int((s0+s1+R_peak0+R_peak1)/2)
+    e = int((s5+s6+R_peak5+R_peak6)/2)
+
+    return ECG_signal[s:e], s, e
 
 # 将信号转化为频谱信号
 # 传入：  信号，保存路径
@@ -292,14 +251,6 @@ def fragment_signal(sample_time, total_time, sample_length, ECG_signal, alignmen
 
     return sample_signal, start, end
 
-# 根据起止点，找到该范围的所有 R 峰
-# 传入：采样起点，采样终点，一整个信号通道，一整个R峰标注
-# 返回值：一个包含R峰坐标点的二维列表
-# 使用举例：
-# r_peaks_position = find_R_R_peaks(start, end, ECG0, ECG_rpeaks)
-# for i in r_peaks_position: 
-#     r_signal = ECG0[i[0]:i[1]]
-# 作者：刘琦
 # 根据起止点，找到该范围的所有 R 峰
 # 传入：采样起点，采样终点，一整个信号通道，一整个R峰标注
 # 返回值：一个包含R峰坐标点的二维列表
