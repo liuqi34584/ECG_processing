@@ -56,7 +56,7 @@ plt.show()
 ```
 <left><img src = "./images/ecg0_0_2000.png" width = 60%><left>
 
-## 2.2 寻找某个时间点函数----signal_time_sample
+## 2.2 寻找时间点函数----signal_time_sample
 本函数用于在代码中找到我们看到的感兴趣段落的位置。
 如可视化界面我们的时间点为 "00:06:50.316"。
 <left><img src = "./images/PhysioNet_wave_resample_time.jpg" width = 100%><left>
@@ -75,7 +75,7 @@ plt.show()
 ```
 <left><img src = "./images/PhysioNet_wave_resample_time2.jpg" width = 60%><left>
 
-## 2.3 寻找寻找R_R峰在信号中的位置函数----find_R_R_peak
+## 2.3 寻找R_R峰在信号中的位置函数----find_R_R_peak
 日常使用时经常遇到提取单个R峰的情况，本函数具备此功能。
 ```
 import MIT_BIH_AF_function as MIT_BIH_AF
@@ -83,7 +83,7 @@ import MIT_BIH_AF_function as MIT_BIH_AF
 # 获取该处时间点的索引值
 index = MIT_BIH_AF.signal_time_sample("00:06:48.817","10:13:43",len(ECG0))
 
-# 获取索引值后的 R 峰信号
+# 根据索引值找到 R 峰信号，起点s, 终点e
 signal, s, e = MIT_BIH_AF.find_R_R_peak(index, ECG0, ECG_rpeaks)
 
 # 展示信号
@@ -93,5 +93,35 @@ plt.show()
 ```
 
 |原采样点|采样出的R峰|
-|:------:|:-----:|
+|:--------------:|:-----:|
 |<left><img src = "./images/find_r_r_peak1.jpg" width = 80%><left>|<left><img src = "./images/find_r_r_peak2.jpg" width = 100%><left>|
+
+## 2.4 寻找一段信号中的所有 R 峰函数----find_R_R_peaks
+我们除了上面的要提取单独 R 峰。很多情况下，我们还要在一段心电信号中提取出该段落的所有单个 R 峰信号。
+```
+import MIT_BIH_AF_function as MIT_BIH_AF
+
+# 获取 起点时间点的索引值
+start_index = MIT_BIH_AF.signal_time_sample("00:06:48.067","10:13:43",len(ECG0))
+
+# 获取 终点时间点的索引值
+end_index = MIT_BIH_AF.signal_time_sample("00:06:51.764","10:13:43",len(ECG0))
+
+# 根据索引值查找 R 峰
+r_peaks_position = MIT_BIH_AF.find_R_R_peaks(start_index, end_index, ECG0, ECG_rpeaks)
+
+for i in r_peaks_position: 
+    r_signal = ECG0[i[0]:i[1]]
+    
+    # 展示信号
+    import matplotlib.pyplot as plt
+    plt.plot(r_signal)
+    plt.show()
+```
+原信号片段
+
+<left><img src = "./images/find_r_r_peaks1.jpg" width = 100%><left>
+
+|1|2|3|4|5|6|7|
+|--|--|--|--|--|--|--|
+|<left><img src = "./images/find_R_R_peaks_r0.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r1.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r2.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r3.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r4.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r5.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r6.png" width = 100%><left>|<left><img src = "./images/find_R_R_peaks_r7.png" width = 100%><left>|

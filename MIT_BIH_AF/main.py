@@ -22,14 +22,19 @@ ECG0 = record.p_signal[:, 0]
 
 import MIT_BIH_AF_function as MIT_BIH_AF
 
-# 获取该处时间点的索引值
-index = MIT_BIH_AF.signal_time_sample("00:06:48.817","10:13:43",len(ECG0))
+# 获取 起点时间点的索引值
+start_index = MIT_BIH_AF.signal_time_sample("00:06:48.067","10:13:43",len(ECG0))
 
-# 获取索引值后的 R 峰信号
-signal, s, e = MIT_BIH_AF.find_R_R_peak(index, ECG0, ECG_rpeaks)
+# 获取 终点时间点的索引值
+end_index = MIT_BIH_AF.signal_time_sample("00:06:51.764","10:13:43",len(ECG0))
 
-# 展示信号
-import matplotlib.pyplot as plt
-plt.plot(signal)  # 打印输出 signal 信号
-plt.show()
+# 根据索引值查找 R 峰
+r_peaks_position = MIT_BIH_AF.find_R_R_peaks(start_index, end_index, ECG0, ECG_rpeaks)
 
+for i in r_peaks_position: 
+    r_signal = ECG0[i[0]:i[1]]
+    
+    # 展示信号
+    import matplotlib.pyplot as plt
+    plt.plot(r_signal)
+    plt.show()

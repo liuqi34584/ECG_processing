@@ -37,6 +37,25 @@ def find_R_R_peak(start, ECG_signal, ECG_rpeaks):
 
     return ECG_signal[s:e], s, e
 
+# 根据起止点，找到该范围的所有 R 峰
+# 传入：采样起点，采样终点，一整个信号通道，一整个R峰标注
+# 返回值：一个包含R峰坐标点的二维列表
+# 使用举例：
+# r_peaks_position = find_R_R_peaks(start, end, ECG0, ECG_rpeaks)
+# for i in r_peaks_position: 
+#     r_signal = ECG0[i[0]:i[1]]
+# 作者：刘琦
+def find_R_R_peaks(start, end, ECG_signal, ECG_rpeaks):
+    start_index = np.searchsorted(ECG_rpeaks, start)
+    end_index = np.searchsorted(ECG_rpeaks, end)
+    r_peaks_position = []
+
+    for index in np.arange(start_index, end_index+1):
+        signal, s, e = find_R_R_peak(ECG_rpeaks[index], ECG_signal, ECG_rpeaks)
+        r_peaks_position.append([s, e])
+    
+    return r_peaks_position
+
 # 对单个R_R峰去趋势
 # 传入：被寻找的索引值，一整个信号单通道，一整个R峰标注
 # 返回值：该索引值右边的R_R峰的片段信号
@@ -79,20 +98,29 @@ def R_R_detrend(start, ECG_signal, ECG_rpeaks, long_detrend=False):
     return signal
 
 
-# 寻找R_R_R_R_R峰在信号中的位置
-# 传入：  被寻找的索引值，一整个信号通道，一整个R峰标注
-# 返回值：该索引值右边的R_R_R_R_R峰的片段信号
-# 使用举例：signal = find_R_R_R_R_R_peak(58484, ECG0, ECG_rpeaks)
+# 寻找_R_R_R_R_R_峰在信号中的位置
+# 传入：  被寻找的索引值起点，一整个信号通道，一整个R峰标注
+# 返回值：该索引值右边的_R_R_R_R_R_峰的片段信号
+# 使用举例：signal, s, e = find_R_R_R_R_R_peak(58484, ECG0, ECG_rpeaks)
 # 作者：刘琦
 def find_R_R_R_R_R_peak(start, ECG_signal, ECG_rpeaks):
     index = np.searchsorted(ECG_rpeaks, start)  # 这个R峰不准确，重新再次寻找R峰
+    s0, e0= ECG_rpeaks[index-1]-20, ECG_rpeaks[index-1]+20
+    R_peak0 = np.argmax(ECG_signal[s0:e0])
+
     s1, e1= ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
     R_peak1 = np.argmax(ECG_signal[s1:e1])
 
-    s2, e2= ECG_rpeaks[index+4]-20, ECG_rpeaks[index+4]+20
-    R_peak2 = np.argmax(ECG_signal[s2:e2])
+    s5, e5= ECG_rpeaks[index+4]-20, ECG_rpeaks[index+4]+20
+    R_peak5 = np.argmax(ECG_signal[s5:e5])
 
-    return ECG_signal[R_peak1+s1-10:R_peak2+s2+10]
+    s6, e6= ECG_rpeaks[index+5]-20, ECG_rpeaks[index+5]+20
+    R_peak6 = np.argmax(ECG_signal[s6:e6])
+
+    s = int((s0+s1+R_peak0+R_peak1)/2)
+    e = int((s5+s6+R_peak5+R_peak6)/2)
+
+    return ECG_signal[s:e], s, e
 
 # 对单个R_R_R_R_R峰去趋势
 # 传入：  被寻找的索引值，一整个信号单通道，一整个R峰标注
@@ -196,10 +224,46 @@ def wavelet_denoise(signal):
 
     return r_signal
 
+# 将信号转化为频谱信号
+# 传入：  信号，保存路径
+# 返回值：无返回值，结果在指定路径输出图片
+# 使用举例：wavelet_cwt2image(sample_signal, "./wavelet.png")
+# 作者：刘琦
+def wavelet_cwt2image(signal, filename):
+        
+    import pywt
+    import matplotlib.pyplot as plt
+    import numpy as np
+    
+    # 选择小波函数，这里使用Morlet小波
+    scale = 32
+    BandWidthfreq = 8  # 增加 Fb 会导致中心频率周围的能量集中度变窄。
+    central_freq = 20  # 越大频率分辨率越高,是因为拉开了频率尺度
+    wavelet_name = 'cmor{:1.1f}-{:1.1f}'.format(BandWidthfreq, central_freq)
+
+    cwt_coeffs, freqs = pywt.cwt(signal, np.arange(1, scale), wavelet_name)  # 进行小波变换
+    plt.imshow(np.abs(cwt_coeffs), extent=[0, len(signal), min(freqs), max(freqs)], cmap='jet',
+            aspect='auto', interpolation='bilinear')
+    plt.axis('off')  # 隐藏坐标轴刻度和标签
+    plt.savefig(filename, bbox_inches='tight', pad_inches=0)  # 保存为PNG格式
+    plt.close()
+
+    # 备用保存方式
+    # x = np.abs(cwt_coeffs)
+    # # 归一化到 0-255 范围
+    # normalized_array = ((x - np.min(x)) * (255 / (np.max(x) - np.min(x)))).astype(np.uint8)
+    # from PIL import Image
+    # # 创建PIL图像对象
+    # image = Image.fromarray(normalized_array)
+    # # 使用resize方法重新调整图像大小
+    # image = image.resize((960, 320))       
+    # # 保存图像到文件
+    # image.save("{}np.png".format(i))
+
 # 根据时间点，截取一个片段波形
 # 传入：采样时间点，采样总时间，原信号，被采样长度，信号对齐方式
 # 返回值：被采样起点，被采样终点，信号
-# 使用举例：start, end, sample_signal = fragment_signal("00:07:59.051", "10:13:43", 1000, ECG0, alignment="right")
+# 使用举例：sample_signal, start, end = fragment_signal("00:07:59.051", "10:13:43", 1000, ECG0, alignment="right")
 # 作者：刘琦
 def fragment_signal(sample_time, total_time, sample_length, ECG_signal, alignment="center"):
 
@@ -227,7 +291,7 @@ def fragment_signal(sample_time, total_time, sample_length, ECG_signal, alignmen
 
     sample_signal = ECG_signal[start:end]
 
-    return start, end, sample_signal
+    return sample_signal, start, end
 
 # 根据起止点，找到该范围的所有 R 峰
 # 传入：采样起点，采样终点，一整个信号通道，一整个R峰标注
@@ -237,13 +301,23 @@ def fragment_signal(sample_time, total_time, sample_length, ECG_signal, alignmen
 # for i in r_peaks_position: 
 #     r_signal = ECG0[i[0]:i[1]]
 # 作者：刘琦
-def find_R_R_peaks(start, end, ECG_signal, ECG_rpeaks):
+# 根据起止点，找到该范围的所有 R 峰
+# 传入：采样起点，采样终点，一整个信号通道，一整个R峰标注
+# 返回值：一个包含R峰坐标点的二维列表
+# 使用举例：
+# r_peaks_position = find_R_R_peaks(start, end, ECG0, ECG_rpeaks)
+# for i in r_peaks_position: 
+#     r_signal = ECG0[i[0]:i[1]]
+# 作者：刘琦
+def find_R_R_R_R_R_peaks(start, end, ECG_signal, ECG_rpeaks):
     start_index = np.searchsorted(ECG_rpeaks, start)
     end_index = np.searchsorted(ECG_rpeaks, end)
     r_peaks_position = []
-
-    for index in np.arange(start_index, end_index+1):
-        signal, s, e = find_R_R_peak(ECG_rpeaks[index], ECG_signal, ECG_rpeaks)
-        r_peaks_position.append([s, e])
+    if ECG_rpeaks[end_index]-ECG_rpeaks[start_index]<800:
+        print("信号片段太短，不足5R长度")
+    else:
+        for index in np.arange(start_index, end_index-800):
+            signal, s, e = find_R_R_R_R_R_peak(ECG_rpeaks[index], ECG_signal, ECG_rpeaks)
+            r_peaks_position.append([s, e])
     
     return r_peaks_position
