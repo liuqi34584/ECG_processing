@@ -135,7 +135,6 @@ def R_R_R_R_R_detrend(start, ECG_signal, ECG_rpeaks):
 
     return signal
 
-
 # 创建一个关于信号的伴随列表，此函数废时间，920万信号处理两秒
 # 传入：信号长度，标记采样点数组，标记符号数组
 # 传出： 一个信号同样长度的标注列表

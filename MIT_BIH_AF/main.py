@@ -25,15 +25,14 @@ import MIT_BIH_AF_function as MIT_BIH_AF
 # 获取 一个起点时间点的索引值
 start_index = MIT_BIH_AF.signal_time_sample("00:08:04.772","10:13:43",len(ECG0))
 
-# 获取 一个终点时间点的索引值
-end_index = MIT_BIH_AF.signal_time_sample("00:08:11.672","10:13:43",len(ECG0))
+# 获取一段信号
+signal, s, e = MIT_BIH_AF.find_R_R_peak(start_index, ECG0, ECG_rpeaks)
 
-# 建立原信号的伴随标注信号
-ECG_ann = MIT_BIH_AF.AFDB_create_mate_ann(len(ECG0), ann_sample, ann_aux_note)
+# 将信号长度重采样到500
+resample_signal = MIT_BIH_AF.resample_signal_length(signal, 500)
 
 import matplotlib.pyplot as plt
-plt.subplot(2,1,1)
-plt.plot(ECG0[start_index:end_index])  # 展示原信号
-plt.subplot(2,1,2)
-plt.plot(ECG_ann[start_index:end_index])  # 展示biaozhu
-plt.show()
+plt.plot(signal)
+plt.plot(resample_signal)
+# plt.show()
+plt.savefig("./MIT_BIH_AF/images/signal_time_sample.jpg", bbox_inches='tight', pad_inches=0)  # 保存为PNG格式
