@@ -22,21 +22,19 @@ ECG0 = record.p_signal[:, 0]
 
 import MIT_BIH_AF_function as MIT_BIH_AF
 
-# 获取 一个时间点的索引值
-index = MIT_BIH_AF.signal_time_sample("00:06:48.772","10:13:43",len(ECG0))
+# 获取 起点时间点的索引值
+start_index = MIT_BIH_AF.signal_time_sample("00:06:48.067","10:13:43",len(ECG0))
 
-# 获取一段信号，该点左右 800 范围
-signal = ECG0[index-800:index+800]
+# 获取 终点时间点的索引值
+end_index = MIT_BIH_AF.signal_time_sample("00:06:51.764","10:13:43",len(ECG0))
 
-# 将信号进行去趋势处理
-detrend_signal = MIT_BIH_AF.wavelet_detrend(signal)
+# 根据索引值查找 3R 峰
+r_peaks_position = MIT_BIH_AF.find_nR_peaks(3, start_index, end_index, ECG0, ECG_rpeaks)
 
-import matplotlib.pyplot as plt
-plt.plot(signal)
-plt.savefig("./MIT_BIH_AF/images/wavelet_detrend_ori.jpg", bbox_inches='tight', pad_inches=0) 
-plt.close()
-
-plt.plot(detrend_signal)
-plt.savefig("./MIT_BIH_AF/images/wavelet_detrend_after.jpg", bbox_inches='tight', pad_inches=0)
-plt.close()
-
+for i in r_peaks_position: 
+    r_signal = ECG0[i[0]:i[1]]
+    
+    # 展示信号
+    import matplotlib.pyplot as plt
+    plt.plot(r_signal)
+    plt.show()

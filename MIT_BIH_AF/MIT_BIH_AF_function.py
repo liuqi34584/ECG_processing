@@ -20,37 +20,80 @@ def signal_time_sample(sample_time, total_time, signal_length):
 # 使用举例：signal, s, e = find_R_R_peak(58484, ECG0, ECG_rpeaks)
 # 作者：刘琦
 def find_R_R_peak(start, ECG_signal, ECG_rpeaks):
-    index = np.searchsorted(ECG_rpeaks, start)  # 这个R峰不准确，重新再次寻找R峰
-    s0, e0= ECG_rpeaks[index-1]-20, ECG_rpeaks[index-1]+20
-    R_peak0 = np.argmax(ECG_signal[s0:e0])
 
-    s1, e1= ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
-    R_peak1 = np.argmax(ECG_signal[s1:e1])
+    index = np.searchsorted(ECG_rpeaks, start)  # 数据集标注的R峰不准确，重新再次寻找R峰
+    if index > len(ECG_rpeaks)-1:  # 超过最后的值会出现index =  len(list)
+        index = len(ECG_rpeaks)-1
 
-    s2, e2= ECG_rpeaks[index+1]-20, ECG_rpeaks[index+1]+20
-    R_peak2 = np.argmax(ECG_signal[s2:e2])
+    if index == 0:  # 如果是第一个R峰，那就不找前面中点
+        s1, e1 = ECG_rpeaks[index]-10, ECG_rpeaks[index]+20
+        R_peak1 = np.argmax(ECG_signal[s1:e1])
 
-    s = int((s0+s1+R_peak0+R_peak1)/2)
-    e = int((s1+s2+R_peak1+R_peak2)/2)
-    # e = R_peak1 + 10 + s1
+        s2, e2 = ECG_rpeaks[index+1]-20, ECG_rpeaks[index+1]+20
+        R_peak2 = np.argmax(ECG_signal[s2:e2])
+
+        s = s1 + R_peak1 - 10
+        e = int((s1+s2+R_peak1+R_peak2)/2)
+
+    elif index == len(ECG_rpeaks)-1: # 如果是最后一个R峰，那就不找后面中点
+        s0, e0 = ECG_rpeaks[index-1]-20, ECG_rpeaks[index-1]+20
+        R_peak0 = np.argmax(ECG_signal[s0:e0])
+
+        s1, e1 = ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
+        R_peak1 = np.argmax(ECG_signal[s1:e1])
+
+        s = int((s0+s1+R_peak0+R_peak1)/2)
+        e = s1 + R_peak1 + 20
+
+    else:
+        s0, e0= ECG_rpeaks[index-1]-10, ECG_rpeaks[index-1]+20
+        R_peak0 = np.argmax(ECG_signal[s0:e0])
+
+        s1, e1= ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
+        R_peak1 = np.argmax(ECG_signal[s1:e1])
+
+        s2, e2= ECG_rpeaks[index+1]-20, ECG_rpeaks[index+1]+20
+        R_peak2 = np.argmax(ECG_signal[s2:e2])
+
+        s = int((s0+s1+R_peak0+R_peak1)/2)
+        e = int((s1+s2+R_peak1+R_peak2)/2)
 
     return ECG_signal[s:e], s, e
 
-# 根据起止点，找到该范围的所有 R 峰
-# 传入：采样起点，采样终点，一整个信号通道，一整个R峰标注
+# 寻找 nR 峰在信号中的位置
+# 传入：  R峰数量n, 被寻找的索引值起点，一整个信号通道，一整个R峰标注
+# 返回值： nR 信号片段，片段信号起点，片段信号终点
+# 使用举例：signal, s, e = MIT_BIH_AF.find_nR_peak(5, s_point, ECG0, ECG_rpeaks)
+# 作者：刘琦
+def find_nR_peak(R_num, start, ECG_signal, ECG_rpeaks):
+
+    index = np.searchsorted(ECG_rpeaks, start)  # 数据集标注的R峰不准确，重新再次寻找R峰
+    if index > len(ECG_rpeaks)-1-R_num:  # 超过最后的值会出现index =  len(list)
+        index = len(ECG_rpeaks)-1-R_num
+
+    start_signal, start_s, start_e = find_R_R_peak(ECG_rpeaks[index], ECG_signal, ECG_rpeaks)
+    end_signal, end_s, end_e = find_R_R_peak(ECG_rpeaks[index+R_num], ECG_signal, ECG_rpeaks)
+
+    s = start_s
+    e = end_s
+
+    return ECG_signal[s:e], s, e
+
+# 根据起止点，找到该范围的所有 nR 峰
+# 传入：R峰数量n, 采样起点，采样终点，一整个信号通道，一整个R峰标注
 # 返回值：一个包含R峰坐标点的二维列表
 # 使用举例：
-# r_peaks_position = find_R_R_peaks(start, end, ECG0, ECG_rpeaks)
+# r_peaks_position = find_nR_peaks(5, start, end, ECG0, ECG_rpeaks)
 # for i in r_peaks_position: 
 #     r_signal = ECG0[i[0]:i[1]]
 # 作者：刘琦
-def find_R_R_peaks(start, end, ECG_signal, ECG_rpeaks):
+def find_nR_peaks(R_num, start, end, ECG_signal, ECG_rpeaks):
     start_index = np.searchsorted(ECG_rpeaks, start)
     end_index = np.searchsorted(ECG_rpeaks, end)
-    r_peaks_position = []
 
-    for index in np.arange(start_index, end_index+1):
-        signal, s, e = find_R_R_peak(ECG_rpeaks[index], ECG_signal, ECG_rpeaks)
+    r_peaks_position = []
+    for index in np.arange(start_index, end_index-R_num+1):
+        signal, s, e = find_nR_peak(R_num, ECG_rpeaks[index], ECG_signal, ECG_rpeaks)
         r_peaks_position.append([s, e])
     
     return r_peaks_position
@@ -158,30 +201,6 @@ def wavelet_detrend(ori_signal):
 
     return signal
 
-# 寻找_R_R_R_R_R_峰在信号中的位置
-# 传入：  被寻找的索引值起点，一整个信号通道，一整个R峰标注
-# 返回值：该索引值右边的_R_R_R_R_R_峰的片段信号
-# 使用举例：signal, s, e = find_R_R_R_R_R_peak(58484, ECG0, ECG_rpeaks)
-# 作者：刘琦
-def find_R_R_R_R_R_peak(start, ECG_signal, ECG_rpeaks):
-    index = np.searchsorted(ECG_rpeaks, start)  # 这个R峰不准确，重新再次寻找R峰
-    s0, e0= ECG_rpeaks[index-1]-20, ECG_rpeaks[index-1]+20
-    R_peak0 = np.argmax(ECG_signal[s0:e0])
-
-    s1, e1= ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
-    R_peak1 = np.argmax(ECG_signal[s1:e1])
-
-    s5, e5= ECG_rpeaks[index+4]-20, ECG_rpeaks[index+4]+20
-    R_peak5 = np.argmax(ECG_signal[s5:e5])
-
-    s6, e6= ECG_rpeaks[index+5]-20, ECG_rpeaks[index+5]+20
-    R_peak6 = np.argmax(ECG_signal[s6:e6])
-
-    s = int((s0+s1+R_peak0+R_peak1)/2)
-    e = int((s5+s6+R_peak5+R_peak6)/2)
-
-    return ECG_signal[s:e], s, e
-
 # 将信号转化为频谱信号
 # 传入：  信号，保存路径
 # 返回值：无返回值，结果在指定路径输出图片
@@ -251,23 +270,3 @@ def fragment_signal(sample_time, total_time, sample_length, ECG_signal, alignmen
 
     return sample_signal, start, end
 
-# 根据起止点，找到该范围的所有 R 峰
-# 传入：采样起点，采样终点，一整个信号通道，一整个R峰标注
-# 返回值：一个包含R峰坐标点的二维列表
-# 使用举例：
-# r_peaks_position = find_R_R_peaks(start, end, ECG0, ECG_rpeaks)
-# for i in r_peaks_position: 
-#     r_signal = ECG0[i[0]:i[1]]
-# 作者：刘琦
-def find_R_R_R_R_R_peaks(start, end, ECG_signal, ECG_rpeaks):
-    start_index = np.searchsorted(ECG_rpeaks, start)
-    end_index = np.searchsorted(ECG_rpeaks, end)
-    r_peaks_position = []
-    if ECG_rpeaks[end_index]-ECG_rpeaks[start_index]<800:
-        print("信号片段太短，不足5R长度")
-    else:
-        for index in np.arange(start_index, end_index-800):
-            signal, s, e = find_R_R_R_R_R_peak(ECG_rpeaks[index], ECG_signal, ECG_rpeaks)
-            r_peaks_position.append([s, e])
-    
-    return r_peaks_position
