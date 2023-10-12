@@ -6,15 +6,15 @@
 - [1 介绍数据集 ](#1-介绍数据集)
   - [1.1 下载数据集](#下载数据集)
 - [2 函数库使用](#2-函数库使用)
-  - [2.1-读取datqrcatr文件获得](#21-读取datqrcatr文件获得-ecg_rpeaksann_aux_noteann_sampleecg0)
-  - [2.2-寻找时间点函数](#22-寻找时间点函数----signal_time_sample)
-  - [2.3-寻找r_r峰在信号](#23-寻找r_r峰在信号----find_r_r_peak)
-  - [2.4-寻找-nr-峰信号以及位置](#24-寻找-nr-峰信号以及位置----find_nr_peak)
-  - [2.5-找到范围内的所有-nr-峰](#25-找到范围内的所有-nr-峰----find_nr_peaks)
-  - [2.6-为信号建立伴随标注信号](#26-为信号建立伴随标注信号----afdb_create_mate_ann)
-  - [2.7-重采样信号长度](#27-重采样信号长度----resample_signal_length)
-  - [2.8-利用小波变换去噪滤波](#28-利用小波变换去噪滤波----wavelet_denoise)
-  - [2.9-利用小波变换去趋势](#29-利用小波变换去趋势----wavelet_detrend)
+  - [2.1-读取datqrcatr文件获得-读取dat,qrc,atr文件，获得 ECG_rpeaks，ann_aux_note，ann_sample，ECG0 ](#21-读取datqrcatr文件获得-ecg_rpeaksann_aux_noteann_sampleecg0)
+  - [2.2-寻找时间点函数----signal_time_sample](#22-寻找时间点函数----signal_time_sample)
+  - [2.3-寻找r_r峰在信号----find_r_r_peak](#23-寻找r_r峰在信号----find_r_r_peak)
+  - [2.4-寻找-nr-峰信号以及位置----find_nr_peak](#24-寻找-nr-峰信号以及位置----find_nr_peak)
+  - [2.5-找到范围内的所有-nr-峰----find_nr_peaks](#25-找到范围内的所有-nr-峰----find_nr_peaks)
+  - [2.6-为信号建立伴随标注信号----afdb_create_mate_ann](#26-为信号建立伴随标注信号----afdb_create_mate_ann)
+  - [2.7-重采样信号长度----resample_signal_length](#27-重采样信号长度----resample_signal_length)
+  - [2.8-利用小波变换去噪滤波----wavelet_denoise](#28-利用小波变换去噪滤波----wavelet_denoise)
+  - [2.9-利用小波变换去趋势----wavelet_detrend](#29-利用小波变换去趋势----wavelet_detrend)
 
 # 1 介绍数据集 
 MIT-BIH-AF 是一个心电图信号房颤数据集。本文件夹则是针对该数据集开发的快捷使用函数。MIT-BIH-AF 数据集采集有 23 人的两导联数据。总长十个小时。单个病人约920万个数据点长度。注意,'00735', '03665' 病人没有 data 数据,虽然数据集有他们的标注但没有他们的信号，不可用。
@@ -57,19 +57,10 @@ record = wfdb.rdrecord(mit_bih_af_path, physical=True)
 signal_annotation = wfdb.rdann(mit_bih_af_path, "atr")
 r_peak_annotation = wfdb.rdann(mit_bih_af_path, "qrs")
 
-# 获取 R 峰标注点列表值
+# 获取关键信息
 ECG_rpeaks = r_peak_annotation.sample
-print(ECG_rpeaks)
-
-# 获取信号的房颤注释列表值
 ann_aux_note = signal_annotation.aux_note
-print(ann_aux_note)
-
-# 获取标注索引列表
 ann_sample = signal_annotation.sample
-print(ann_sample)
-
-# 获取通道 0 的信号
 ECG0 = record.p_signal[:, 0]
 
 # 展示信号
@@ -100,7 +91,7 @@ plt.show()
 ```
 <left><img src = "./images/PhysioNet_wave_resample_time2.jpg" width = 60%><left>
 
-## 2.3 寻找R_R峰在信号----find_R_R_peak
+## 2.3 寻找R_R峰信号以及其位置----find_R_R_peak
 日常使用时经常遇到提取单个R峰的情况，本函数具备此功能。
 
 使用代码举例：
@@ -143,7 +134,7 @@ signal, s, e = MIT_BIH_AF.find_nR_peak(9, index, ECG0, ECG_rpeaks)
 |:-----:|:-----:|:-----:|:-----:|
 |<left><img src = "./images/find_nR_peak_1.jpg" width = 100%><left>|<left><img src = "./images/find_nR_peak_2.jpg" width = 100%><left>|<left><img src = "./images/find_nR_peak_3.jpg" width = 100%><left>|<left><img src = "./images/find_nR_peak_9.jpg" width = 100%><left>|
 
-## 2.5 找到范围内的所有 nR 峰----find_nR_peaks
+## 2.5 找到指定范围内的所有 nR 峰----find_nR_peaks
 我们除了上面的要提取单独 nR 峰。很多情况下，我们还要在一段心电信号中提取出该段落的所有单个 nR 峰信号。下面代码展示了寻找一段信号中的所有 3R 峰的过程。
 
 使用代码举例：
@@ -243,8 +234,7 @@ denoise_signal = MIT_BIH_AF.wavelet_denoise(signal)
 ```
 |原信号|去噪之后的信号|
 |---|---|
-|<left><img src = "./images/wavelet_denoise_ori.jpg" width = 100%><left>|<left><img src = "./images/wavelet_denoise_after.jpg" width = 100%><left>
-|
+|<left><img src = "./images/wavelet_denoise_ori.jpg" width = 100%><left>|<left><img src = "./images/wavelet_denoise_after.jpg" width = 100%><left>|
 
 ## 2.9 利用小波变换去趋势----wavelet_detrend
 去趋势也叫 ”基线偏移“，”基线漂移“，描述的都是同一个现象，即原波形被一种频率更低的波形干扰，而产生整体波形的移动。本函数封装了一个小波去趋势的方法，使用的是 小波pyhon库。因此使用时要注意安装软件  ```pip install PyWavelets```

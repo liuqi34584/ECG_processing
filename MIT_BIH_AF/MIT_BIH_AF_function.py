@@ -63,7 +63,7 @@ def find_R_R_peak(start, ECG_signal, ECG_rpeaks):
 # 寻找 nR 峰在信号中的位置
 # 传入：  R峰数量n, 被寻找的索引值起点，一整个信号通道，一整个R峰标注
 # 返回值： nR 信号片段，片段信号起点，片段信号终点
-# 使用举例：signal, s, e = MIT_BIH_AF.find_nR_peak(5, s_point, ECG0, ECG_rpeaks)
+# 使用举例：signal, s, e = find_nR_peak(5, s_point, ECG0, ECG_rpeaks)
 # 作者：刘琦
 def find_nR_peak(R_num, start, ECG_signal, ECG_rpeaks):
 
@@ -191,6 +191,7 @@ def wavelet_denoise(signal):
 # 对单个信号去趋势
 # 传入：  想要去趋势的信号
 # 返回值：被去趋势的信号
+# 使用举例：detrend_signal = wavelet_denoise(ori_signal)
 # 作者：刘琦
 def wavelet_detrend(ori_signal):
     import pywt
@@ -236,37 +237,3 @@ def wavelet_cwt2image(signal, filename):
     # image = image.resize((960, 320))       
     # # 保存图像到文件
     # image.save("{}np.png".format(i))
-
-# 根据时间点，截取一个片段波形
-# 传入：采样时间点，采样总时间，原信号，被采样长度，信号对齐方式
-# 返回值：被采样起点，被采样终点，信号
-# 使用举例：sample_signal, start, end = fragment_signal("00:07:59.051", "10:13:43", 1000, ECG0, alignment="right")
-# 作者：刘琦
-def fragment_signal(sample_time, total_time, sample_length, ECG_signal, alignment="center"):
-
-    signal_length = len(ECG_signal)
-    numbers = sample_time.split(':')
-    sample_sec = float(numbers[0])*3600 + float(numbers[1])*60 + float(numbers[2])
-    numbers = total_time.split(':')
-    total_sec = float(numbers[0])*3600 + float(numbers[1])*60 + float(numbers[2])
-    sample_point = int(signal_length*(sample_sec/total_sec))
-
-    if alignment == "right": # 右对齐采样
-        start = sample_point
-        end = sample_point + sample_length
-    elif alignment == "left": # 左对齐采样
-        start = sample_point - sample_length
-        end = sample_point
-    else: # 居中采样 alignment == "center"
-        start = sample_point - int(sample_length/2)
-        end = sample_point + int(sample_length/2)
-    
-    if start < 0:
-        start = 0
-    if end > len(ECG_signal)-1:
-        end = len(ECG_signal)-1
-
-    sample_signal = ECG_signal[start:end]
-
-    return sample_signal, start, end
-
