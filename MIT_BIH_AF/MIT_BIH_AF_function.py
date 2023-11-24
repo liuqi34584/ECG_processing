@@ -98,6 +98,24 @@ def find_nR_peaks(R_num, start, end, ECG_signal, ECG_rpeaks):
     
     return r_peaks_position
 
+# 寻找信号段落在信号中的标签
+# 传入：  片段信号起点，片段信号终点，一整个信号伴随列表
+# 返回值： 该信号片段所属的类别，1为房颤，0为正常
+# 使用举例：label = MIT_BIH_AF.find_signal_label(s, e, ECG_ann)
+# 作者：刘琦
+def find_signal_label(start, end, ECG_ann):
+    label_seg = np.array(ECG_ann[start:end])
+    num_1 = len(label_seg[label_seg==1])
+    num_0 = len(label_seg[label_seg==0])
+    
+    # 保留三位有效数字
+    ratio = num_1/len(label_seg)
+
+    if ratio > 0.4: label = 1
+    else: label = 0
+
+    return label
+
 # 创建一个关于信号的伴随列表，此函数废时间，920万信号处理两秒
 # 传入：信号长度，标记采样点数组，标记符号数组
 # 传出： 一个信号同样长度的标注列表
@@ -175,7 +193,7 @@ def wavelet_denoise(signal):
     import pywt
 
     # 小波变换
-    coeffs = pywt.wavedec(data=signal, wavelet='db5', level=9)
+    coeffs = pywt.wavedec(data=signal, wavelet='db4', level=9)
     cA9, cD9, cD8, cD7, cD6, cD5, cD4, cD3, cD2, cD1 = coeffs
     # 阈值去噪
     threshold = (np.median(np.abs(cD1)) / 0.6745) * (np.sqrt(2 * np.log(len(cD1))))
@@ -184,7 +202,7 @@ def wavelet_denoise(signal):
     for i in range(1, len(coeffs) - 2):
         coeffs[i] = pywt.threshold(coeffs[i], threshold)
     # 小波反变换,获取去噪后的信号
-    r_signal = pywt.waverec(coeffs=coeffs, wavelet='db5')
+    r_signal = pywt.waverec(coeffs=coeffs, wavelet='db4')
 
     return r_signal
 
@@ -212,7 +230,16 @@ def wavelet_cwt2image(signal, filename):
     import pywt
     import matplotlib.pyplot as plt
     import numpy as np
+    import os
     
+    # 去掉文件路径中的最后一个文件名
+    folder_path = os.path.dirname(filename)
+
+    # 判断文件夹路径是否存在，若不存在则新建文件夹
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+
     # 选择小波函数，这里使用Morlet小波
     scale = 32
     BandWidthfreq = 8  # 增加 Fb 会导致中心频率周围的能量集中度变窄。
@@ -220,20 +247,21 @@ def wavelet_cwt2image(signal, filename):
     wavelet_name = 'cmor{:1.1f}-{:1.1f}'.format(BandWidthfreq, central_freq)
 
     cwt_coeffs, freqs = pywt.cwt(signal, np.arange(1, scale), wavelet_name)  # 进行小波变换
-    plt.imshow(np.abs(cwt_coeffs), extent=[0, len(signal), min(freqs), max(freqs)], cmap='jet',
-            aspect='auto', interpolation='bilinear')
-    plt.axis('off')  # 隐藏坐标轴刻度和标签
-    plt.savefig(filename, bbox_inches='tight', pad_inches=0)  # 保存为PNG格式
-    plt.close()
+    # plt.imshow(np.abs(cwt_coeffs), extent=[0, len(signal), min(freqs), max(freqs)], cmap='jet',
+    #         aspect='auto', interpolation='bilinear')
+    # plt.axis('off')  # 隐藏坐标轴刻度和标签
+    # plt.savefig(filename, bbox_inches='tight', pad_inches=0)  # 保存为PNG格式
+    # plt.close()
 
     # 备用保存方式
-    # x = np.abs(cwt_coeffs)
-    # # 归一化到 0-255 范围
-    # normalized_array = ((x - np.min(x)) * (255 / (np.max(x) - np.min(x)))).astype(np.uint8)
-    # from PIL import Image
-    # # 创建PIL图像对象
-    # image = Image.fromarray(normalized_array)
-    # # 使用resize方法重新调整图像大小
-    # image = image.resize((960, 320))       
-    # # 保存图像到文件
-    # image.save("{}np.png".format(i))
+    x = np.abs(cwt_coeffs)
+    # 归一化到 0-255 范围
+    normalized_array = ((x - np.min(x)) * (255 / (np.max(x) - np.min(x)))).astype(np.uint8)
+    from PIL import Image
+    # 创建PIL图像对象
+    image = Image.fromarray(normalized_array)
+    # 使用resize方法重新调整图像大小
+    image = image.resize((240, 160))       
+    # 保存图像到文件
+    image.save(filename)
+

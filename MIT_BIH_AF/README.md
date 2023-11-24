@@ -6,7 +6,7 @@
 - [1 介绍数据集 ](#1-介绍数据集)
   - [1.1 下载数据集](#下载数据集)
 - [2 函数库使用](#2-函数库使用)
-  - [2.1-读取datqrcatr文件获得-读取dat,qrc,atr文件，获得 ECG_rpeaks，ann_aux_note，ann_sample，ECG0 ](#21-读取datqrcatr文件获得-ecg_rpeaksann_aux_noteann_sampleecg0)
+  - [2.1-读取dat,qrc,atr文件，获得 ECG_rpeaks，ann_aux_note，ann_sample，ECG0 ](#21-读取datqrcatr文件获得-ecg_rpeaksann_aux_noteann_sampleecg0)
   - [2.2-寻找时间点函数----signal_time_sample](#22-寻找时间点函数----signal_time_sample)
   - [2.3-寻找r_r峰在信号----find_r_r_peak](#23-寻找r_r峰在信号----find_r_r_peak)
   - [2.4-寻找-nr-峰信号以及位置----find_nr_peak](#24-寻找-nr-峰信号以及位置----find_nr_peak)
@@ -15,6 +15,7 @@
   - [2.7-重采样信号长度----resample_signal_length](#27-重采样信号长度----resample_signal_length)
   - [2.8-利用小波变换去噪滤波----wavelet_denoise](#28-利用小波变换去噪滤波----wavelet_denoise)
   - [2.9-利用小波变换去趋势----wavelet_detrend](#29-利用小波变换去趋势----wavelet_detrend)
+  - [2.10-获取信号标签](#210-获取信号标签函数----find_signal_label)
 
 # 1 介绍数据集 
 MIT-BIH-AF 是一个心电图信号房颤数据集。本文件夹则是针对该数据集开发的快捷使用函数。MIT-BIH-AF 数据集采集有 23 人的两导联数据。总长十个小时。单个病人约920万个数据点长度。注意,'00735', '03665' 病人没有 data 数据,虽然数据集有他们的标注但没有他们的信号，不可用。
@@ -255,3 +256,39 @@ detrend_signal = MIT_BIH_AF.wavelet_detrend(signal)
 |原信号|去趋势处理的信号|
 |---|---|
 |<left><img src = "./images/wavelet_detrend_ori.jpg" width = 100%><left>|<left><img src = "./images/wavelet_detrend_after.jpg" width = 100%><left>|
+
+
+## 2.10 获取信号标签函数----find_signal_label
+本函数用于获取一段信号所属的类别标签。虽然数据集已经对R峰进行了标注，但很多情况我们提取出了多R峰，就要同时为这个多R峰带上类别标签。
+使用此函数使用时要搭配 AFDB_create_mate_ann() 伴随函数使用。将伴随列表作为输入。
+
+<left><img src = "./images/find_signal_label.jpg" width = 100%><left>
+采样上面的时间点，然后给出类别标签。
+
+使用代码举例：
+```
+import MIT_BIH_AF_function as MIT_BIH_AF
+
+# 获取时间点的索引值
+point1 = MIT_BIH_AF.signal_time_sample("00:06:47.988","10:13:43",len(ECG0))
+point2 = MIT_BIH_AF.signal_time_sample("00:06:53.186","10:13:43",len(ECG0))
+
+# 根据索引值查找 2R 峰
+signal1, s1, e1 = MIT_BIH_AF.find_nR_peak(2, point1, ECG0, ECG_rpeaks)
+signal2, s2, e2 = MIT_BIH_AF.find_nR_peak(2, point2, ECG0, ECG_rpeaks)
+
+# 创建一个关于信号的伴随列表
+ECG_ann = MIT_BIH_AF.AFDB_create_mate_ann(len(ECG0), ann_sample, ann_aux_note)
+
+label1 = MIT_BIH_AF.find_signal_label(s1, e1, ECG_ann)
+label2 = MIT_BIH_AF.find_signal_label(s2, e2, ECG_ann)
+
+print("采样点1    00:06:47.988 处的标签是：", label1)
+print("采样点2    00:06:53.186 处的标签是：", label2)
+```
+输出：
+```
+采样点1    00:06:47.988 处的标签是： 0
+采样点2    00:06:53.186 处的标签是： 1
+```
+结合如上波形图，代码输出正确。

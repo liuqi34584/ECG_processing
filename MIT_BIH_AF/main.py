@@ -22,19 +22,19 @@ ECG0 = record.p_signal[:, 0]
 
 import MIT_BIH_AF_function as MIT_BIH_AF
 
-# 获取 起点时间点的索引值
-start_index = MIT_BIH_AF.signal_time_sample("00:06:48.067","10:13:43",len(ECG0))
+# 获取时间点的索引值
+point1 = MIT_BIH_AF.signal_time_sample("00:06:47.988","10:13:43",len(ECG0))
+point2 = MIT_BIH_AF.signal_time_sample("00:06:53.186","10:13:43",len(ECG0))
 
-# 获取 终点时间点的索引值
-end_index = MIT_BIH_AF.signal_time_sample("00:06:51.764","10:13:43",len(ECG0))
+# 根据索引值查找 2R 峰
+signal1, s1, e1 = MIT_BIH_AF.find_nR_peak(2, point1, ECG0, ECG_rpeaks)
+signal2, s2, e2 = MIT_BIH_AF.find_nR_peak(2, point2, ECG0, ECG_rpeaks)
 
-# 根据索引值查找 3R 峰
-r_peaks_position = MIT_BIH_AF.find_nR_peaks(3, start_index, end_index, ECG0, ECG_rpeaks)
+# 创建一个关于信号的伴随列表
+ECG_ann = MIT_BIH_AF.AFDB_create_mate_ann(len(ECG0), ann_sample, ann_aux_note)
 
-for i in r_peaks_position: 
-    r_signal = ECG0[i[0]:i[1]]
-    
-    # 展示信号
-    import matplotlib.pyplot as plt
-    plt.plot(r_signal)
-    plt.show()
+label1 = MIT_BIH_AF.find_signal_label(s1, e1, ECG_ann)
+label2 = MIT_BIH_AF.find_signal_label(s2, e2, ECG_ann)
+
+print("采样点1    00:06:47.988 处的标签是：", label1)
+print("采样点2    00:06:53.186 处的标签是：", label2)
