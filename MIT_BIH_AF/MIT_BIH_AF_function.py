@@ -26,37 +26,14 @@ def find_R_R_peak(start, ECG_signal, ECG_rpeaks):
         index = len(ECG_rpeaks)-1
 
     if index == 0:  # 如果是第一个R峰，那就不找前面中点
-        s1, e1 = ECG_rpeaks[index]-10, ECG_rpeaks[index]+20
-        R_peak1 = np.argmax(ECG_signal[s1:e1])
-
-        s2, e2 = ECG_rpeaks[index+1]-20, ECG_rpeaks[index+1]+20
-        R_peak2 = np.argmax(ECG_signal[s2:e2])
-
-        s = s1 + R_peak1 - 10
-        e = int((s1+s2+R_peak1+R_peak2)/2)
-
+        s = ECG_rpeaks[index]
+        e = int((ECG_rpeaks[index]+ECG_rpeaks[index+1])/2)
     elif index == len(ECG_rpeaks)-1: # 如果是最后一个R峰，那就不找后面中点
-        s0, e0 = ECG_rpeaks[index-1]-20, ECG_rpeaks[index-1]+20
-        R_peak0 = np.argmax(ECG_signal[s0:e0])
-
-        s1, e1 = ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
-        R_peak1 = np.argmax(ECG_signal[s1:e1])
-
-        s = int((s0+s1+R_peak0+R_peak1)/2)
-        e = s1 + R_peak1 + 20
-
+        s = int((ECG_rpeaks[index-1]+ECG_rpeaks[index])/2)
+        e = ECG_rpeaks[index]
     else:
-        s0, e0= ECG_rpeaks[index-1]-10, ECG_rpeaks[index-1]+20
-        R_peak0 = np.argmax(ECG_signal[s0:e0])
-
-        s1, e1= ECG_rpeaks[index]-20, ECG_rpeaks[index]+20
-        R_peak1 = np.argmax(ECG_signal[s1:e1])
-
-        s2, e2= ECG_rpeaks[index+1]-20, ECG_rpeaks[index+1]+20
-        R_peak2 = np.argmax(ECG_signal[s2:e2])
-
-        s = int((s0+s1+R_peak0+R_peak1)/2)
-        e = int((s1+s2+R_peak1+R_peak2)/2)
+        s = int((ECG_rpeaks[index-1]+ECG_rpeaks[index])/2)
+        e = int((ECG_rpeaks[index]+ECG_rpeaks[index+1])/2)
 
     return ECG_signal[s:e], s, e
 
@@ -261,7 +238,7 @@ def wavelet_cwt2image(signal, filename):
     # 创建PIL图像对象
     image = Image.fromarray(normalized_array)
     # 使用resize方法重新调整图像大小
-    image = image.resize((240, 160))       
+    image = image.resize((120, 80))       
     # 保存图像到文件
     image.save(filename)
 

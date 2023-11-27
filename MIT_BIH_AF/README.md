@@ -15,7 +15,7 @@
   - [2.7-重采样信号长度----resample_signal_length](#27-重采样信号长度----resample_signal_length)
   - [2.8-利用小波变换去噪滤波----wavelet_denoise](#28-利用小波变换去噪滤波----wavelet_denoise)
   - [2.9-利用小波变换去趋势----wavelet_detrend](#29-利用小波变换去趋势----wavelet_detrend)
-  - [2.10-获取信号标签](#210-获取信号标签函数----find_signal_label)
+  - [2.10 获取信号标签函数----find_signal_label](#210-获取信号标签函数----find_signal_label)
 
 # 1 介绍数据集 
 MIT-BIH-AF 是一个心电图信号房颤数据集。本文件夹则是针对该数据集开发的快捷使用函数。MIT-BIH-AF 数据集采集有 23 人的两导联数据。总长十个小时。单个病人约920万个数据点长度。注意,'00735', '03665' 病人没有 data 数据,虽然数据集有他们的标注但没有他们的信号，不可用。
