@@ -6,7 +6,7 @@ from IPython.display import display
 # 获取数据所有病人信息
 # 传入：病人字符 ID 号码，病人文件位置列表
 # 返回值：病人信息字符串
-# 使用举例：
+# 使用举例：index, info = CPSC2021.get_patient_info('data_92_17', patient_list)
 # 作者：刘琦
 def get_patient_info(id_str:str, patient_list):
 
@@ -132,7 +132,7 @@ def signal_time_sample(sample_time, signal_length):
 # 寻找R_R峰在信号中的位置
 # 传入：  被寻找的索引值，一整个信号通道，一整个R峰标注
 # 返回值：该索引值右边的R_R峰的片段信号,起点索引,止点索引
-# 使用举例：signal, s, e = CPSC2021.find_R_R_peak(signal_point, ECG1, ECG_rpeaks)
+# 使用举例：signal, s, e = CPSC.find_R_R_peak(signal_point, ECG1, ECG_rpeaks)
 # 作者：刘琦
 def find_R_R_peak(start, ECG_signal, ECG_rpeaks):
 

@@ -1,7 +1,8 @@
 import wfdb
+import matplotlib.pyplot as plt
 
 # 设置患者04015的路径
-mit_bih_af_path = 'C:/mycode/dataset/mit-bih-atrial-fibrillation-database-1.0.0/files/04015'
+mit_bih_af_path = 'C:/mycode/dataset/mit-bih-atrial-fibrillation-database-1.0.0/files/08405'
 
 # 读取患者文件
 record = wfdb.rdrecord(mit_bih_af_path, physical=True)
@@ -24,17 +25,13 @@ import MIT_BIH_AF_function as MIT_BIH_AF
 
 # 获取时间点的索引值
 point1 = MIT_BIH_AF.signal_time_sample("00:06:47.988","10:13:43",len(ECG0))
-point2 = MIT_BIH_AF.signal_time_sample("00:06:53.186","10:13:43",len(ECG0))
 
-# 根据索引值查找 2R 峰
-signal1, s1, e1 = MIT_BIH_AF.find_nR_peak(2, point1, ECG0, ECG_rpeaks)
-signal2, s2, e2 = MIT_BIH_AF.find_nR_peak(2, point2, ECG0, ECG_rpeaks)
+# 根据索引值查找 8R 峰
+signal0, s1, e1 = MIT_BIH_AF.find_nR_peak(8, point1, ECG0, ECG_rpeaks)
+ecg_filtered = MIT_BIH_AF.scipy_denoise(signal0)
 
-# 创建一个关于信号的伴随列表
-ECG_ann = MIT_BIH_AF.AFDB_create_mate_ann(len(ECG0), ann_sample, ann_aux_note)
-
-label1 = MIT_BIH_AF.find_signal_label(s1, e1, ECG_ann)
-label2 = MIT_BIH_AF.find_signal_label(s2, e2, ECG_ann)
-
-print("采样点1    00:06:47.988 处的标签是：", label1)
-print("采样点2    00:06:53.186 处的标签是：", label2)
+plt.subplot(2,1,1)
+plt.plot(signal0, color='k')
+plt.subplot(2,1,2)
+plt.plot(ecg_filtered, color='k')
+plt.show()

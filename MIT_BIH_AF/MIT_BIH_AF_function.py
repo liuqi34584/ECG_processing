@@ -170,18 +170,39 @@ def wavelet_denoise(signal):
     import pywt
 
     # 小波变换
-    coeffs = pywt.wavedec(data=signal, wavelet='db4', level=9)
-    cA9, cD9, cD8, cD7, cD6, cD5, cD4, cD3, cD2, cD1 = coeffs
+    max_levels = pywt.dwt_max_level(len(signal), 'db4')
+    coeffs = pywt.wavedec(data=signal, wavelet='db4', level=max_levels)
+
     # 阈值去噪
-    threshold = (np.median(np.abs(cD1)) / 0.6745) * (np.sqrt(2 * np.log(len(cD1))))
-    cD1.fill(0)
-    cD2.fill(0)
+    threshold = (np.median(np.abs(coeffs[-1])) / 0.6745) * (np.sqrt(2 * np.log(len(coeffs[-1]))))
+    coeffs[-1].fill(0)
+    coeffs[-2].fill(0)
     for i in range(1, len(coeffs) - 2):
         coeffs[i] = pywt.threshold(coeffs[i], threshold)
     # 小波反变换,获取去噪后的信号
     r_signal = pywt.waverec(coeffs=coeffs, wavelet='db4')
 
     return r_signal
+
+# 利用机器学习库对信号进行滤波
+# 传入：想要滤波的信号
+# 返回值：被滤波的信号
+# 使用举例：ecg_filtered = MIT_BIH_AF.scipy_denoise(signal0)
+# 作者：刘琦
+def scipy_denoise(ecg_data):
+    from scipy import signal
+    # 设计带通滤波器以滤除不在特定频率范围的信号
+    low_freq = 0.05  # 心电最低频率
+    high_freq = 100  # 心电最高频率
+    nyquist_freq = 0.5 * 1000
+    low = low_freq / nyquist_freq
+    high = high_freq / nyquist_freq
+    b, a = signal.butter(4, [low, high], btype='band')
+
+    # 使用滤波器对信号进行滤波
+    ecg_filtered = signal.filtfilt(b, a, np.array(ecg_data))
+
+    return ecg_filtered
 
 # 对单个信号去趋势
 # 传入：  想要去趋势的信号

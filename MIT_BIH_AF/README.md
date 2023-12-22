@@ -292,3 +292,18 @@ print("采样点2    00:06:53.186 处的标签是：", label2)
 采样点2    00:06:53.186 处的标签是： 1
 ```
 结合如上波形图，代码输出正确。
+
+## 2.11 补充函数
+### scipy_denoise 机器学习库滤波函数
+
+效果如图：
+
+<left><img src = "./images/scipy_denoise.png" width = 100%><left>
+
+使用代码：
+
+```
+import MIT_BIH_AF_function as MIT_BIH_AF
+
+ecg_filtered = MIT_BIH_AF.scipy_denoise(signal0)
+```
